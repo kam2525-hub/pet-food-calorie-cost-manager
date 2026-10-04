@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ペット用フードのカロリー＆月額コストスマート計算機</title>
+    <style>
+        :root {
+            --primary: #FF7B54;
+            --primary-hover: #E86A45;
+            --secondary: #FFB26B;
+            --accent: #FFD59E;
+            --bg-color: #FFF9F4;
+            --card-bg: #FFFFFF;
+            --text-main: #2D3748;
+            --text-muted: #718096;
+            --border-color: #E2E8F0;
+            --shadow: 0 10px 25px -5px rgba(255, 123, 84, 0.1), 0 8px 10px -6px rgba(255, 123, 84, 0.1);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 10px rgba(255, 123, 84, 0.3);
+        }
+
+        .logo-icon svg {
+            width: 32px;
+            height: 32px;
+            fill: white;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            body {
+                padding: 10px;
+            }
+            .card {
+                padding: 20px;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .label-tip {
+            font-weight: normal;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 123, 84, 0.15);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .radio-card {
+            flex: 1;
+            position: relative;
+        }
+
+        .radio-card input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .radio-card label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            background: #fff;
+        }
+
+        .radio-card input:checked + label {
+            border-color: var(--primary);
+            background-color: rgba(255, 123, 84, 0.05);
+            color: var(--primary);
+        }
+
+        .radio-card svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 6px;
+            fill: currentColor;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 12px rgba(255, 123, 84, 0.3);
+        }
+
+        .btn-calculate:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-calculate:active {
+            transform: translateY(1px);
+        }
+
+        /* 結果表示エリア */
+        .result-section {
+            display: none;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--primary);
+            border-bottom: 2px dashed var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-box {
+            background: var(--bg-color);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .result-box .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .result-box .value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .result-box .unit {
+            font-size: 0.9rem;
+            font-weight: normal;
+            color: var(--text-muted);
+        }
+
+        .result-box.highlight {
+            background: linear-gradient(135deg, rgba(255, 123, 84, 0.1), rgba(255, 178, 107, 0.1));
+            border-color: var(--secondary);
+        }
+
+        .result-box.highlight .value {
+            color: var(--primary);
+        }
+
+        .advice-box {
+            background-color: #F0FFF4;
+            border: 1px solid #C6F6D5;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #22543D;
+        }
+
+        .advice-box strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .reset-link {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .reset-link button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .reset-link button:hover {
+            color: var(--text-main);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo-icon">
+            <!-- 肉球アイコン SVG -->
+            <svg viewBox="0 0 24 24">
+                <path d="M12,3C10.9,3 10,3.9 10,5C10,5.5 10.2,6 10.5,6.3C9.6,7.1 9,8.3 9,9.5C9,10.6 9.5,11.6 10.3,12.2C8.9,13.1 8,14.8 8,16.5C8,19 10,21 12.5,21C15,21 17,19 17,16.5C17,14.8 16.1,13.1 14.7,12.2C15.5,11.6 16,10.6 16,9.5C16,8.3 15.4,7.1 14.5,6.3C14.8,6 15,5.5 15,5C15,3.9 14.1,3 13,3H12M7,9C5.9,9 5,9.9 5,11C5,12.1 5.9,13 7,13C8.1,13 9,12.1 9,11C9,9.9 8.1,9 7,9M17,9C15.9,9 15,9.9 15,11C15,12.1 15.9,13 17,13C18.1,13 19,12.1 19,11C19,9.9 18.1,9 17,9M4,14C2.9,14 2,14.9 2,16C2,17.1 2.9,18 4,18C5.1,18 6,17.1 6,16C6,14.9 5.1,14 4,14M20,14C18.9,14 18,14.9 18,16C18,17.1 18.9,18 20,18C21.1,18 22,17.1 22,16C22,14.9 21.1,14 20,14Z"/>
+            </svg>
+        </div>
+        <h1>ペット用フードのカロリー＆月額コスト計算機</h1>
+        <p class="subtitle">愛犬・愛猫にぴったりの給餌量と毎月の食費をスマートに算出します</p>
+    </header>
+
+    <div class="card">
+        <form id="calcForm">
+            <div class="form-grid">
+                <!-- ペットの種類 -->
+                <div class="form-group full-width">
+                    <label>ペットの種類</label>
+                    <div class="radio-group">
+                        <div class="radio-card">
+                            <input type="radio" id="petDog" name="petType" value="dog" checked>
+                            <label for="petDog">
+                                <!-- 犬アイコン SVG -->
+                                <svg viewBox="0 0 24 24"><path d="M19,3H5C3.89,3 3,3.89 3,5V19C3,20.1 3.89,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.89 20.1,3 19,3M11,17H9V15H11V17M15,17H13V15H15V17M17,13H7V11H17V13Z"/></svg>
+                                いぬ（犬）
+                            </label>
+                        </div>
+                        <div class="radio-card">
+                            <input type="radio" id="petCat" name="petType" value="cat">
+                            <label for="petCat">
+                                <!-- 猫アイコン SVG -->
+                                <svg viewBox="0 0 24 24"><path d="M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M12,4C15.31,4 18,6.69 18,10C18,10.64 17.9,11.26 17.72,11.85C16.73,11.3 15.59,11 14.4,11C11.8,11 9.4,12.18 7.8,14.07C6.67,12.95 6,11.43 6,9.8C6,6.6 8.8,4 12,4Z"/></svg>
+                                ねこ（猫）
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 体重 -->
+                <div class="form-group">
+                    <label for="weight">体重 <span class="label-tip">(kg)</span></label>
+                    <input type="number" id="weight" step="0.1" min="0.1" max="100" placeholder="例: 4.5" required>
+                </div>
+
+                <!-- ライフステージ・状態 -->
+                <div class="form-group">
+                    <label for="lifeStage">ライフステージ / 状態</label>
+                    <select id="lifeStage">
+                        <option value="adult" selected>成犬・成猫（標準）</option>
+                        <option value="neutered">去勢・避妊済み</option>
+                        <option value="diet">減量が必要（太り気味）</option>
+                        <option value="senior">シニア（高齢期）</option>
+                        <option value="growing">成長期（子犬・子猫）</option>
+                        <option value="active">活発・運動量が多い</option>
+                    </select>
+                </div>
+
+                <!-- フードのカロリー -->
+                <div class="form-group">
+                    <label for="calorie">フードのカロリー <span class="label-tip">(kcal / 100g)</span></label>
+                    <input type="number" id="calorie" step="1" min="100" max="1000" placeholder="例: 350" required>
+                </div>
+
+                <!-- パッケージ容量 -->
+                <div class="form-group">
+                    <label for="capacity">袋の容量 <span class="label-tip">(g)</span></label>
+                    <input type="number" id="capacity" step="1" min="50" max="20000" placeholder="例: 1000 (1kgの場合)" required>
+                </div>
+
+                <!-- 価格 -->
+                <div class="form-group full-width">
+                    <label for="price">1袋あたりの価格 <span class="label-tip">(円・税込)</span></label>
+                    <input type="number" id="price" step="1" min="1" max="50000" placeholder="例: 2200" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-calculate">計算する</button>
+        </form>
+    </div>
+
+    <!-- 結果表示エリア -->
+    <div id="resultSection" class="card result-section">
+        <div class="result-header">🐾 計算結果 🐾</div>
+        
+        <div class="result-grid">
+            <div class="result-box">
+                <div class="label">1日の給餌量（目安）</div>
+                <div class="value" id="resGrams">--</div>
+            </div>
+            <div class="result-box highlight">
+                <div class="label">1ヶ月の食費（目安）</div>
+                <div class="value" id="resCost">--</div>
+            </div>
+        </div>
+
+        <div class="result-grid">
+            <div class="result-box">
+                <div class="label">1日のカロリー要求量 (DER)</div>
+                <div class="value" id="resCalorie"><span class="unit">kcal</span></div>
+            </div>
+            <div class="result-box">
+                <div class="label">1ヶ月の消費量</div>
+                <div class="value" id="resBagCount"><span class="unit">袋</span></div>
+            </div>
+        </div>
+
+        <div class="advice-box" id="adviceText">
+            <strong>💡 アドバイス</strong>
+            ここにペットの状態に応じたアドバイスが表示されます。
+        </div>
+
+        <div class="reset-link">
+            <button type="button" id="resetBtn">入力をクリアする</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('calcForm');
+        const resultSection = document.getElementById('resultSection');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // ローカルストレージからデータを復元
+        const savedData = localStorage.getItem('petCalcData');
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                document.querySelector(`input[name="petType"][value="${data.petType || 'dog'}"]`).checked = true;
+                document.getElementById('weight').value = data.weight || '';
+                document.getElementById('lifeStage').value = data.lifeStage || 'adult';
+                document.getElementById('calorie').value = data.calorie || '';
+                document.getElementById('capacity').value = data.capacity || '';
+                document.getElementById('price').value = data.price || '';
+                
+                // データがあれば自動計算して結果を表示
+                if (data.weight && data.calorie && data.capacity && data.price) {
+                    calculate(data, false);
+                }
+            } catch (e) {
+                console.error('Failed to load saved data', e);
+            }
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                petType: document.querySelector('input[name="petType"]:checked').value,
+                weight: parseFloat(document.getElementById('weight').value),
+                lifeStage: document.getElementById('lifeStage').value,
+                calorie: parseFloat(document.getElementById('calorie').value),
+                capacity: parseFloat(document.getElementById('capacity').value),
+                price: parseFloat(document.getElementById('price').value)
+            };
+
+            // ローカルストレージに保存
+            localStorage.setItem('petCalcData', JSON.stringify(formData));
+
+            calculate(formData, true);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            localStorage.removeItem('petCalcData');
+            form.reset();
+            resultSection.style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        function calculate(data, animate = true) {
+            const { petType, weight, lifeStage, calorie, capacity, price } = data;
+
+            // 安静時エネルギー要求量 (RER) の計算: 70 * (体重kg)^0.75
+            const rer = 70 * Math.pow(weight, 0.75);
+
+            // 係数（ライフステージ・状態別）
+            let factor = 1.6; // デフォルト成犬・成猫標準
+            let advice = '';
+
+            switch (lifeStage) {
+                case 'adult':
+                    factor = petType === 'dog' ? 1.6 : 1.2;
+                    advice = '成犬・成猫の標準的な活動量です。体型を定期的にチェックし、肋骨が軽く触れる程度を維持しましょう。';
+                    break;
+                case 'neutered':
+                    factor = petType === 'dog' ? 1.4 : 1.0;
+                    advice = '去勢・避妊後はホルモンバランスの変化により太りやすくなります。体重の増加傾向に注意してください。';
+                    break;
+                case 'diet':
+                    factor = petType === 'dog' ? 1.0 : 0.8;
+                    advice = '減量が必要な状態です。獣医師の指導のもと、おやつのカロリーも含めたトータル管理を行いましょう。';
+                    break;
+                case 'senior':
+                    factor = petType === 'dog' ? 1.2 : 1.1;
+                    advice = 'シニア期は代謝や運動量が低下します。関節や内臓の健康に配慮したフード選びがおすすめです。';
+                    break;
+                case 'growing':
+                    factor = petType === 'dog' ? 3.0 : 2.5;
+                    advice = '成長期は多くのエネルギーが必要です。栄養失調にならないよう、高品質なフードをしっかり与えましょう。';
+                    break;
+                case 'active':
+                    factor = petType === 'dog' ? 2.0 : 1.5;
+                    advice = '活発で運動量が多い状態です。消費カロリーに見合った十分な栄養補給を心がけてください。';
+                    break;
+            }
+
+            // 1日の総エネルギー要求量 (DER)
+            const der = Math.round(rer * factor);
+
+            // 1日の給餌量 (g) = (DER / フード1gあたりのカロリー)
+            const gramsPerDay = Math.round((der / (calorie / 100)));
+
+            // 1ヶ月（30日）の消費量 (g)
+            const gramsPerMonth = gramsPerDay * 30;
+
+            // 1ヶ月の袋数
+            const bagsPerMonthExact = gramsPerMonth / capacity;
+            const bagsPerMonthDisplay = bagsPerMonthExact.toFixed(1);
+
+            // 1ヶ月のコスト = (1ヶ月の総グラム数 / 袋の容量) * 1袋の価格
+            const monthlyCost = Math.round(bagsPerMonthExact * price);
+
+            // 結果をDOMに反映
+            document.getElementById('resGrams').innerHTML = `${gramsPerDay} <span class="unit">g / 日</span>`;
+            document.getElementById('resCost').innerHTML = `${monthlyCost.toLocaleString()} <span class="unit">円 / 月</span>`;
+            document.getElementById('resCalorie').innerHTML = `${der} <span class="unit">kcal</span>`;
+            document.getElementById('resBagCount').innerHTML = `${bagsPerMonthDisplay} <span class="unit">袋 (約 ${Math.round(gramsPerMonth)}g)</span>`;
+            document.getElementById('adviceText').innerHTML = `<strong>💡 アドバイス</strong>${advice}`;
+
+            resultSection.style.display = 'block';
+
+            if (animate) {
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
